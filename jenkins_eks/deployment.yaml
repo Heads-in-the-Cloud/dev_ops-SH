@@ -1,0 +1,277 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookings-deployment
+  namespace: default
+  labels:
+    app: bookings-microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookings-microservice
+  template:
+    metadata:
+      labels:
+        app: bookings-microservice
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+      containers:
+      - name: bookings-microservice
+        image: seanhorner/utopia_backend_bookings_microservice:latest
+        imagePullPolicy: Always
+        env:
+          - name: BOOKINGS_PORT
+            value: "5010"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: db_host
+                name: db-info
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                key: db_user
+                name: db-info
+          - name: DB_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db_user_password
+                name: db-info
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                key: secret_key
+                name: secret-key
+        ports:
+          - containerPort: 5010
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flights-deployment
+  namespace: default
+  labels:
+    app: flights-microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flights-microservice
+  template:
+    metadata:
+      labels:
+        app: flights-microservice
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+      containers:
+      - name: flights-microservice
+        image: seanhorner/utopia_backend_flights_microservice:latest
+        imagePullPolicy: Always
+        env:
+          - name: FLIGHTS_PORT
+            value: "5020"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: db_host
+                name: db-info
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                key: db_user
+                name: db-info
+          - name: DB_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db_user_password
+                name: db-info
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                key: secret_key
+                name: secret-key
+        ports:
+          - containerPort: 5020
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-deployment
+  namespace: default
+  labels:
+    app: users-microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users-microservice
+  template:
+    metadata:
+      labels:
+        app: users-microservice
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+      containers:
+      - name: users-microservice
+        image: seanhorner/utopia_backend_users_microservice:latest
+        imagePullPolicy: Always
+        env:
+          - name: USERS_PORT
+            value: "5030"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: db_host
+                name: db-info
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                key: db_user
+                name: db-info
+          - name: DB_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db_user_password
+                name: db-info
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                key: secret_key
+                name: secret-key
+        ports:
+          - containerPort: 5030
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-prod-deployment
+  namespace: default
+  labels:
+    app: data-prod-microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-prod-microservice
+  template:
+    metadata:
+      labels:
+        app: data-prod-microservice
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+      containers:
+      - name: data-prod-microservice
+        image: seanhorner/utopia_backend_data_producers_microservice:latest
+        imagePullPolicy: Always
+        env:
+          - name: DATA_PROD_PORT
+            value: "5040"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: db_host
+                name: db-info
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                key: db_user
+                name: db-info
+          - name: DB_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db_user_password
+                name: db-info
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                key: secret_key
+                name: secret-key
+        ports:
+          - containerPort: 5040
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: default
+  labels:
+    app: admin-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-frontend
+  template:
+    metadata:
+      labels:
+        app: admin-frontend
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+      containers:
+      - name: admin-frontend
+        image: seanhorner/utopia_frontend_admin_microservice:latest
+        imagePullPolicy: Always
+        env:
+          - name: ADMIN_PORT
+            value: "5000"
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                key: secret_key
+                name: secret-key
+        ports:
+          - containerPort: 5000

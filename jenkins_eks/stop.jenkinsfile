@@ -1,0 +1,34 @@
+pipeline {
+  agent any
+
+  stages{
+    stage('Secret Retrieval'){
+      steps{
+        script{ 
+          env.AWS_REGION = "${region}"
+          env.HOSTED_ZONE = "${HOSTED_ZONE}"
+          env.CLUSTER_NAME = "${CLUSTER_NAME_SH}"
+          env.RECORD_NAME = "utopia-sh-eks-${params.environment}.hitwc.link"
+          env.AWS_ACCOUNT_ID= "${ORG_ACCOUNT_NUM}"
+          env.DNS=""
+          sh "echo $ENVIRONMENT"
+        }
+      }
+    }
+
+    stage('Kubectl Stop') {
+      steps {
+        dir("aws-eks") {
+          sh 'chmod +x stop.sh'
+          sh './stop.sh'              
+        }
+      }
+    }
+
+    stage('Cluster Deletion') {
+      steps {
+        sh "eksctl delete cluster --name=${CLUSTER_NAME_SH}"
+      }
+    }
+  }
+}

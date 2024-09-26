@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: utopia-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+  labels:
+    app: utopia-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /api/v2/bookings/*
+          pathType: Prefix
+          backend:
+            service:
+              name: bookings-service
+              port:
+                number: 5010
+        - path: /api/v2/flights/*
+          pathType: Prefix
+          backend:
+            service:
+              name: flights-service
+              port:
+                number: 5020
+        - path: /api/v2/users/*
+          pathType: Prefix
+          backend:
+            service:
+              name: users-service
+              port:
+                number: 5030
+        - path: /api/v2/data-prod/*
+          pathType: Prefix
+          backend:
+            service:
+              name: data-prod-service
+              port:
+                number: 5040
+        - path: /*
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend-service
+              port:
+                number: 5000

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapUsers: | 
+    - userarn: arn:aws:iam::026390315914:user/Jenkins 
+      username: Jenkins 
+      groups: 
+      - system:masters
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      - system:node-proxier
+      rolearn: arn:aws:iam::026390315914:role/eksctl-wc-cluster-FargatePodExecutionRole-1SETFFODOYN3D
+      username: system:node:{{SessionName}}
