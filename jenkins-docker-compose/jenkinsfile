@@ -1,0 +1,66 @@
+pipeline {
+    agent {
+        node {
+            label 'aws-ready'
+        }
+    }
+
+    environment {
+        ECS_CONTEXT_NAME = "aws_ecs-sh"
+        ORG_ECR_URI = "${ORG_ACCOUNT_NUM}.dkr.ecr.${region}.amazonaws.com"
+        SECRET_ID = 'dev/SeanH/utopia-secrets'
+        SECRET_KEY="This:Is:A:Bad:Secret:Quay"
+        DB_ACCESS_URI="sqlite:///database.db"
+    }
+
+    stages {
+        stage("Environment Loading") {
+            steps {
+                echo 'Environmental variables loading...'
+            }
+        }
+
+        stage("Docker-Compose Set-Up") {
+            steps {
+                echo 'Setting up Docker context and getting repo credentials...'
+                sh "docker context use default"
+                sh "aws ecr get-login-password --region ${region} |docker login --username AWS --password-stdin ${ORG_ECR_URI}"
+            }
+        }
+
+        stage("Docker-Compose Deployment") {
+            steps {
+                echo 'Bringing services online...'
+                dir("jenkins-docker-compose") {
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
+
+        stage("Docker-Compose Running") {
+            steps {
+                echo 'Printing running services...'
+                dir("jenkins-docker-compose") {
+                    sh 'docker-compose ps'
+                }
+            }
+        }
+        
+        stage("Keep Alive") {
+            steps {
+                echo 'Keeping setup alive for 10 minutes...'
+                sleep 600
+            }
+        }
+
+        stage("Docker-Compose Take Down") {
+            steps {
+                echo 'Bringing services down...'
+                dir("jenkins-docker-compose") {
+                    sh 'docker-compose down'
+                }
+                sh 'docker context use default'
+            }
+        }
+    }
+}

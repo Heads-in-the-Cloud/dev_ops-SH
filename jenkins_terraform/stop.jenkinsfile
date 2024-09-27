@@ -1,0 +1,36 @@
+pipeline {
+  agent { node { label "aws-ready" } }
+
+  environment {
+    CURR_TIME = System.currentTimeMillis()
+  }
+
+  stages {
+    stage("Terraform Destroy") {
+      steps {
+        echo "Bringing infrastructure down..."
+        dir("project") {
+          sh "terraform destroy -auto-approve"
+        }
+      }
+    }
+
+    stage("Terraform State List") {
+      steps {
+        echo "Displaying current infrastructure for project..."
+        dir("project") {
+          sh "terraform state list"
+          sh "terraform state list > terraform_state_${CURR_TIME}.txt"
+        }
+      }
+    }
+
+    stage("Upload Log Files to S3...") {
+      steps {
+        dir("project") {
+          sh "aws s3 mv terraform_state_${CURR_TIME}.txt s3://utopia-terraform-sh/terraform_state_lists/"
+        }
+      }
+    }
+  }
+}

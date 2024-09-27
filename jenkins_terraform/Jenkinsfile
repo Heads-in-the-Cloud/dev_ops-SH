@@ -1,0 +1,134 @@
+pipeline {
+  agent { node { label "aws-ready" } }
+
+  environment {
+    CURR_TIME = System.currentTimeMillis()
+  }
+
+  stages {
+
+    stage('Setup parameters') {
+      steps {
+        script {
+          properties([
+            parameters([
+              [$class: 'ChoiceParameter', 
+                choiceType: 'PT_SINGLE_SELECT', 
+                description: 'Starting or stopping the cluster?', 
+                filterLength: 1, 
+                filterable: false, 
+                name: 'action', 
+                script: [
+                  $class: 'GroovyScript', 
+                  fallbackScript: [
+                      classpath: [], 
+                      sandbox: false, 
+                      script: 
+                        "return['Could not load actions']"
+                  ], 
+                  script: [
+                      classpath: [], 
+                      sandbox: false, 
+                      script: 
+                        "return['start','stop']"
+                  ]
+                ]
+              ],
+              [$class: 'CascadeChoiceParameter', 
+                choiceType: 'PT_SINGLE_SELECT', 
+                description: 'Development or Production environment?',
+                name: 'environment', 
+                referencedParameters: 'action', 
+                script: [
+                  $class: 'GroovyScript', 
+                  fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: "return['Couldn't get operational environment from parameters']"
+                  ], 
+                  script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: '''
+                    if(action.equals("start")){
+                      return["dev","prod"]
+                    }
+                    '''
+                  ] 
+                ]
+              ]
+            ])
+          ])
+        }
+      }
+    }
+
+    stage("Terraform Initialization") {
+      when { expression { return params.action =='start' } }
+      steps {
+        echo "Initializing Terraform Deployment..."
+        dir("jenkins_terraform") {
+          sh "terraform init"
+        }
+      }
+    }
+
+    stage("Terraform Validation") {
+      when { expression { return params.action =='start' } }
+      steps {
+        echo "Validating Terraform deployment config files..."
+        dir("jenkins_terraform") {
+          sh "terraform validate"
+        }
+      }
+    }
+
+    stage("Terraform Plan") {
+      when { expression { return params.action =='start' } }
+      steps {
+        echo "Planning Terraform Deployment..."
+        dir("jenkins_terraform") {
+          sh "terraform plan -json -out=terraform_plan_${CURR_TIME}.json"
+        }
+      }
+    }
+
+    stage("Terraform Graph") {
+      when { expression { return params.action =='start' } }
+      steps {
+        echo "Printing Terraform graph to DOT file..."
+        sh "terraform graph -type=plan | neato -Tpng > terraform_graph_${CURR_TIME}.png"
+      }
+    }
+    
+    stage("Terraform Deployment") {
+      when { expression { return params.action =='start' } }
+      steps {
+        echo "Bringing infrastructure online..."
+        dir("jenkins_terraform") {
+          sh "terraform apply -auto-approve"
+        }
+      }
+    }
+
+    stage("Terraform State List") {
+      steps {
+        echo "Displaying current infrastructure for project..."
+        dir("jenkins_terraform") {
+          sh "terraform state list"
+          sh "terraform state list > terraform_state_${CURR_TIME}"
+        }
+      }
+    }
+
+    stage("Terraform Destroy") {
+      when { expression { return params.action =='stop' } }
+      steps {
+        echo "Bringing infrastructure down..."
+        dir("jenkins_terraform") {
+          sh "terraform destroy -auto-approve"
+        }
+      }
+    }
+  }
+}
